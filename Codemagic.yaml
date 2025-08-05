@@ -1,0 +1,66 @@
+# codemagic.yaml
+workflows:
+  android-workflow:
+    name: Arise Android Build
+    environment:
+      groups:
+        - keystore_credentials # Add your signing credentials here
+      vars:
+        PACKAGE_NAME: "com.example.arise"
+    scripts:
+      - name: Set up Flutter
+        script: |
+          flutter --version
+          flutter pub get
+      - name: Build APK
+        script: |
+          flutter build apk --release
+          cp build/app/outputs/flutter-apk/app-release.apk /tmp/arise-release.apk
+    artifacts:
+      - /tmp/arise-release.apk
+    publishing:
+      email:
+        recipients:
+          - your.email@example.com
+      scripts:
+        - name: Notify about build
+          script: echo "Build completed successfully!"
+
+  ios-workflow:
+    name: Arise iOS Build
+    environment:
+      groups:
+        - ios_certificates # Add your iOS signing credentials here
+    scripts:
+      - name: Set up Flutter
+        script: |
+          flutter --version
+          flutter pub get
+      - name: Build IPA
+        script: |
+          flutter build ipa --release --export-options-plist=ios/ExportOptions.plist
+    artifacts:
+      - build/ios/ipa/*.ipa
+    publishing:
+      email:
+        recipients:
+          - your.email@example.com
+
+# Global configurations
+environment:
+  flutter: stable
+
+cache:
+  cache_paths:
+    - ~/.pub-cache
+    - /tmp/flutter_codemagic
+
+workflow_settings:
+  android_signing:
+    - keystore_reference: $CM_KEYSTORE_PATH
+      keystore_password: $CM_KEYSTORE_PASSWORD
+      key_alias: $CM_KEY_ALIAS
+      key_password: $CM_KEY_PASSWORD
+  ios_signing:
+    distribution_type: app_store
+    bundle_identifier: $PACKAGE_NAME
